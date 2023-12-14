@@ -134,7 +134,7 @@ public class NamesrvStartup {
         MixAll.printObjectProperties(log, nettyServerConfig);
 
         //todo 创建 NamesrvController 对象
-        //todo NamesrvController 与 KVConfigManager 循环依赖问题如何解决的??
+        //todo NamesrvController 与 KVConfigManager 循环依赖问题如何解决的 ??
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard
