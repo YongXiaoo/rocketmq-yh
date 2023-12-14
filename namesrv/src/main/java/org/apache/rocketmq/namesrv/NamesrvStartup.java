@@ -54,6 +54,7 @@ public class NamesrvStartup {
     public static NamesrvController main0(String[] args) {
 
         try {
+            //todo start nameServer
             NamesrvController controller = createNamesrvController(args);
             start(controller);
             String tip = "The Name Server boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
@@ -79,16 +80,22 @@ public class NamesrvStartup {
             return null;
         }
 
+        //todo create NamesrvConfig object
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
+        //todo create NettyServerConfig object
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
+        //todo set listen port
         nettyServerConfig.setListenPort(9876);
+        //todo 判断命令行中是否有 -c 参数值 如果有则代表是配置文件
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
                 InputStream in = new BufferedInputStream(new FileInputStream(file));
                 properties = new Properties();
                 properties.load(in);
+                //todo 将配置文件信息映射到 namesrvConfig
                 MixAll.properties2Object(properties, namesrvConfig);
+                //todo 将配置文件信息映射到 nettyServerConfig
                 MixAll.properties2Object(properties, nettyServerConfig);
 
                 namesrvConfig.setConfigStorePath(file);
@@ -98,6 +105,7 @@ public class NamesrvStartup {
             }
         }
 
+        //todo 判断命令行中是否有 -p 参数 默认使用slf4j
         if (commandLine.hasOption('p')) {
             InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_CONSOLE_NAME);
             MixAll.printObjectProperties(console, namesrvConfig);
@@ -105,8 +113,10 @@ public class NamesrvStartup {
             System.exit(0);
         }
 
+        //todo 将命令行信息映射到 namesrvConfig
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), namesrvConfig);
 
+        //todo 判断是否有 ROCKETMQ_HOME 环境变量
         if (null == namesrvConfig.getRocketmqHome()) {
             System.out.printf("Please set the %s variable in your environment to match the location of the RocketMQ installation%n", MixAll.ROCKETMQ_HOME_ENV);
             System.exit(-2);
@@ -123,6 +133,8 @@ public class NamesrvStartup {
         MixAll.printObjectProperties(log, namesrvConfig);
         MixAll.printObjectProperties(log, nettyServerConfig);
 
+        //todo 创建 NamesrvController 对象
+        //todo NamesrvController 与 KVConfigManager 循环依赖问题如何解决的??
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard
