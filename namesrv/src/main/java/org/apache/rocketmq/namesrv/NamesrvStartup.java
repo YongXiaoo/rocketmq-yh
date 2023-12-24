@@ -54,7 +54,9 @@ public class NamesrvStartup {
     public static NamesrvController main0(String[] args) {
 
         try {
+            //todo 创建namesrvController对象
             NamesrvController controller = createNamesrvController(args);
+            //todo nameserver 启动
             start(controller);
             String tip = "The Name Server boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
             log.info(tip);
@@ -79,9 +81,12 @@ public class NamesrvStartup {
             return null;
         }
 
+        //todo 创建namesrvConfig对象
         final NamesrvConfig namesrvConfig = new NamesrvConfig();
+        //todo 创建nettyServerConfig对象
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         nettyServerConfig.setListenPort(9876);
+        //todo 读取命令行中 -c 参数值 表示是一个配置文件
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
@@ -98,6 +103,7 @@ public class NamesrvStartup {
             }
         }
 
+        //todo 判断是否有 -p 参数 打印日志
         if (commandLine.hasOption('p')) {
             InternalLogger console = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_CONSOLE_NAME);
             MixAll.printObjectProperties(console, namesrvConfig);
@@ -105,13 +111,16 @@ public class NamesrvStartup {
             System.exit(0);
         }
 
+        //todo 将命令行参数 映射到 namesrvConfig 类中
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), namesrvConfig);
 
+        //todo  判断是否指定ROCKETMQ_HOME环境变量
         if (null == namesrvConfig.getRocketmqHome()) {
             System.out.printf("Please set the %s variable in your environment to match the location of the RocketMQ installation%n", MixAll.ROCKETMQ_HOME_ENV);
             System.exit(-2);
         }
 
+        //todo 设置读取的日志路径 logback.xml
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
         JoranConfigurator configurator = new JoranConfigurator();
         configurator.setContext(lc);
@@ -123,6 +132,7 @@ public class NamesrvStartup {
         MixAll.printObjectProperties(log, namesrvConfig);
         MixAll.printObjectProperties(log, nettyServerConfig);
 
+        //todo 创建NamesrvController对象
         final NamesrvController controller = new NamesrvController(namesrvConfig, nettyServerConfig);
 
         // remember all configs to prevent discard
