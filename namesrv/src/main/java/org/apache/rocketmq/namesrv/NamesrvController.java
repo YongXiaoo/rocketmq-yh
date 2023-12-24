@@ -63,7 +63,11 @@ public class NamesrvController {
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
         this.namesrvConfig = namesrvConfig;
         this.nettyServerConfig = nettyServerConfig;
+
+        //todo 读取 NamesrcConfig 中  kvConfigPath 路径下的文件
         this.kvConfigManager = new KVConfigManager(this);
+
+        //todo  这个对象非常重要 nameserver 存储的broker信息和路由表信息都保存在这里
         this.routeInfoManager = new RouteInfoManager();
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
         this.configuration = new Configuration(
@@ -75,15 +79,20 @@ public class NamesrvController {
 
     public boolean initialize() {
 
+        //todo 读取NamesrvConfig中指定路径的文件然后保存到 配置表中 map
         this.kvConfigManager.load();
 
+        //todo 创建远程Netty 服务 这个很重要 后面还会用到
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        //todo 创建线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        //todo 注册处理器
         this.registerProcessor();
 
+        //todo  启动定时任务 扫描不活跃的线程池
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -92,6 +101,7 @@ public class NamesrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        //todo  启动定时任务 定时打印 kv 配置
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -100,6 +110,7 @@ public class NamesrvController {
             }
         }, 1, 10, TimeUnit.MINUTES);
 
+        //todo 文件监听器 监听文件修改 和 加载
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
             try {

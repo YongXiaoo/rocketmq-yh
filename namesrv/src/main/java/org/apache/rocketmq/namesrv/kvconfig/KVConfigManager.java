@@ -41,6 +41,7 @@ public class KVConfigManager {
         this.namesrvController = namesrvController;
     }
 
+    //todo
     public void load() {
         String content = null;
         try {
