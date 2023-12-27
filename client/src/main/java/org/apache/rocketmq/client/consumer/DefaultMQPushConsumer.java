@@ -390,6 +390,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
         this.consumerGroup = consumerGroup;
         this.namespace = namespace;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
+        //todo 真正的实现类
         defaultMQPushConsumerImpl = new DefaultMQPushConsumerImpl(this, rpcHook);
         if (enableMsgTrace) {
             try {
