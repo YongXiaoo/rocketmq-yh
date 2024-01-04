@@ -333,7 +333,7 @@
     <root>
         <level value="INFO"/>
         <appender-ref ref="DefaultAppender"/>
-<!--        <level value="INFO"/>-->
-<!--        <appender-ref ref="STDOUT"/>-->
+        <level value="INFO"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

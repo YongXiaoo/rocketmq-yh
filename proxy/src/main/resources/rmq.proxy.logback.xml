@@ -354,80 +354,83 @@
         </encoder>
     </appender>
 
-    <logger name="RocketmqBroker" additivity="false" level="INFO">
+    <logger name="RocketmqBroker" additivity="true" level="INFO">
         <appender-ref ref="RocketmqBrokerAppender"/>
     </logger>
 
-    <logger name="RocketmqProtection" additivity="false" level="INFO">
+    <logger name="RocketmqProtection" additivity="true" level="INFO">
         <appender-ref ref="RocketmqProtectionAppender"/>
     </logger>
 
-    <logger name="RocketmqWaterMark" additivity="false" level="INFO">
+    <logger name="RocketmqWaterMark" additivity="true" level="INFO">
         <appender-ref ref="RocketmqWaterMarkAppender"/>
     </logger>
 
-    <logger name="RocketmqCommon" additivity="false" level="INFO">
+    <logger name="RocketmqCommon" additivity="true" level="INFO">
         <appender-ref ref="RocketmqBrokerAppender"/>
     </logger>
 
-    <logger name="RocketmqStore" additivity="false" level="INFO">
+    <logger name="RocketmqStore" additivity="true" level="INFO">
         <appender-ref ref="RocketmqStoreAppender"/>
     </logger>
 
-    <logger name="RocketmqStoreError" additivity="false" level="INFO">
+    <logger name="RocketmqStoreError" additivity="true" level="INFO">
         <appender-ref ref="RocketmqStoreErrorAppender"/>
     </logger>
 
-    <logger name="RocketmqTransaction" additivity="false" level="INFO">
+    <logger name="RocketmqTransaction" additivity="true" level="INFO">
         <appender-ref ref="RocketmqTransactionAppender"/>
     </logger>
 
-    <logger name="RocketmqRebalanceLock" additivity="false" level="INFO">
+    <logger name="RocketmqRebalanceLock" additivity="true" level="INFO">
         <appender-ref ref="RocketmqRebalanceLockAppender"/>
     </logger>
 
-    <logger name="RocketmqRemoting" additivity="false" level="INFO">
+    <logger name="RocketmqRemoting" additivity="true" level="INFO">
         <appender-ref ref="RocketmqRemotingAppender"/>
     </logger>
 
-    <logger name="RocketmqStats" additivity="false" level="INFO">
+    <logger name="RocketmqStats" additivity="true" level="INFO">
         <appender-ref ref="RocketmqStatsAppender"/>
     </logger>
 
-    <logger name="RocketmqCommercial" additivity="false" level="INFO">
+    <logger name="RocketmqCommercial" additivity="true" level="INFO">
         <appender-ref ref="RocketmqCommercialAppender"/>
     </logger>
 
-    <logger name="RocketmqFilter" additivity="false" level="INFO">
+    <logger name="RocketmqFilter" additivity="true" level="INFO">
         <appender-ref ref="RocketmqFilterAppender"/>
     </logger>
 
-    <logger name="RocketmqConsole" additivity="false" level="INFO">
+    <logger name="RocketmqConsole" additivity="true" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="RocketmqPop" additivity="false" level="INFO">
+    <logger name="RocketmqPop" additivity="true" level="INFO">
         <appender-ref ref="RocketmqPopAppender" />
     </logger>
 
-    <logger name="RocketmqProxy" additivity="false" level="INFO">
+    <logger name="RocketmqProxy" additivity="true" level="INFO">
         <appender-ref ref="RocketmqProxyAppender" />
     </logger>
 
-    <logger name="RocketmqProxyWatermark" additivity="false" level="INFO">
+    <logger name="RocketmqProxyWatermark" additivity="true" level="INFO">
         <appender-ref ref="RocketmqProxyWatermarkAppender" />
     </logger>
 
     <!-- Use json formatter to log metrics -->
-    <logger name="io.opentelemetry.exporter.logging.otlp.OtlpJsonLoggingMetricExporter" additivity="false" level="INFO">
+    <logger name="io.opentelemetry.exporter.logging.otlp.OtlpJsonLoggingMetricExporter" additivity="true" level="INFO">
         <appender-ref ref="RocketmqProxyMetricsAppender"/>
     </logger>
 
-    <logger name="io.opentelemetry.exporter.logging.LoggingMetricExporter" additivity="false" level="INFO">
+    <logger name="io.opentelemetry.exporter.logging.LoggingMetricExporter" additivity="true" level="INFO">
         <appender-ref ref="RocketmqProxyMetricsAppender" />
     </logger>
 
     <root level="INFO">
         <appender-ref ref="DefaultAppender"/>
+
+        <level value="INFO"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
