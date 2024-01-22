@@ -1,5 +1,7 @@
 {
   "rocketMQClusterName": "DefaultCluster",
   "namesrvAddr": "127.0.0.1:9876",
-  "enableACL": true
+  "remotingListenPort": 8081,
+  "grpcServerPort": 8082,
+  "enableAcl": true
 }

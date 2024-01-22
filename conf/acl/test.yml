@@ -1,0 +1,27 @@
+accounts:
+  - accessKey: rocketmq2
+    admin: true
+    defaultGroupPerm: null
+    defaultTopicPerm: null
+    groupPerms: null
+    secretKey: '12345678'
+    topicPerms: null
+  - accessKey: RocketMQ
+    admin: false
+    defaultGroupPerm: SUB
+    defaultTopicPerm: DENY
+    groupPerms:
+      - groupA=DENY
+      - groupB=PUB|SUB
+      - groupC=SUB
+    secretKey: '12345678'
+    topicPerms:
+      - topicA=DENY
+      - topicB=PUB|SUB
+      - topicC=SUB
+    whiteRemoteAddress: null
+dataVersion:
+  - counter: 3
+    timestamp: 1704369306502
+globalWhiteRemoteAddresses:
+#- '*'
