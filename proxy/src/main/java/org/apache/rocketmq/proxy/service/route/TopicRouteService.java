@@ -59,6 +59,10 @@ public abstract class TopicRouteService extends AbstractStartAndShutdown {
     protected final ScheduledExecutorService scheduledExecutorService;
     protected final ThreadPoolExecutor cacheRefreshExecutor;
 
+    /**
+     * proxy 侧路由管理服务
+     * @param mqClientAPIFactory
+     */
     public TopicRouteService(MQClientAPIFactory mqClientAPIFactory) {
         ProxyConfig config = ConfigurationManager.getProxyConfig();
 
@@ -75,6 +79,7 @@ public abstract class TopicRouteService extends AbstractStartAndShutdown {
         );
         this.mqClientAPIFactory = mqClientAPIFactory;
 
+        //todo 本地topic路由缓存
         this.topicCache = Caffeine.newBuilder().maximumSize(config.getTopicRouteServiceCacheMaxNum())
             .expireAfterAccess(config.getTopicRouteServiceCacheExpiredSeconds(), TimeUnit.SECONDS)
             .refreshAfterWrite(config.getTopicRouteServiceCacheRefreshSeconds(), TimeUnit.SECONDS)
@@ -83,9 +88,11 @@ public abstract class TopicRouteService extends AbstractStartAndShutdown {
                 @Override
                 public @Nullable MessageQueueView load(String topic) throws Exception {
                     try {
+                        //todo 运行阶段 如果缓存不存在则从 nameserver加载
                         TopicRouteData topicRouteData = mqClientAPIFactory.getClient().getTopicRouteInfoFromNameServer(topic, Duration.ofSeconds(3).toMillis());
                         return buildMessageQueueView(topic, topicRouteData);
                     } catch (Exception e) {
+                        //todo 如果nameserver 返回topic不存在 则本地缓存一个空的对象 WRAPPED_EMPTY_QUEUE
                         if (TopicRouteHelper.isTopicNotExistError(e)) {
                             return MessageQueueView.WRAPPED_EMPTY_QUEUE;
                         }
