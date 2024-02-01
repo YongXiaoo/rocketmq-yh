@@ -60,16 +60,21 @@ public class RouteActivity extends AbstractMessingActivity {
         super(messagingProcessor, grpcClientSettingsManager, grpcChannelManager);
     }
 
+    //todo proxy侧返回路由 查询路由
     public CompletableFuture<QueryRouteResponse> queryRoute(ProxyContext ctx, QueryRouteRequest request) {
         CompletableFuture<QueryRouteResponse> future = new CompletableFuture<>();
         try {
+            //todo 校验topic 模型转换
             validateTopic(request.getTopic());
             List<org.apache.rocketmq.proxy.common.Address> addressList = this.convertToAddressList(request.getEndpoints());
 
             String topicName = GrpcConverter.getInstance().wrapResourceWithNamespace(request.getTopic());
+
+            //todo 查询路由
             ProxyTopicRouteData proxyTopicRouteData = this.messagingProcessor.getTopicRouteDataForProxy(
                 ctx, addressList, topicName);
 
+            //todo 模型转换
             List<MessageQueue> messageQueueList = new ArrayList<>();
             Map<String, Map<Long, Broker>> brokerMap = buildBrokerMap(proxyTopicRouteData.getBrokerDatas());
 
@@ -185,6 +190,7 @@ public class RouteActivity extends AbstractMessingActivity {
         return Permission.NONE;
     }
 
+    //todo 客户端会携带自己配置的proxy端点进来，在broker侧会对端点的adress地址列表做转换。
     protected List<org.apache.rocketmq.proxy.common.Address> convertToAddressList(Endpoints endpoints) {
 
         boolean useEndpointPort = ConfigurationManager.getProxyConfig().isUseEndpointPortFromRequest();
@@ -192,7 +198,11 @@ public class RouteActivity extends AbstractMessingActivity {
         List<org.apache.rocketmq.proxy.common.Address> addressList = new ArrayList<>();
         for (Address address : endpoints.getAddressesList()) {
             int port = ConfigurationManager.getProxyConfig().getGrpcServerPort();
+            //todo 默认 false host保持不变 使用grpcServerPort
             if (useEndpointPort) {
+                //todo 设置为true，则使用客户端实际传入的port
+                //todo 注意 但是如果经过端口转换（各类负载均衡，如nginx、k8s），可以通过设置
+                //todo useEndpointPortFromRequest=true，采用客户端传入port
                 port = address.getPort();
             }
             addressList.add(new org.apache.rocketmq.proxy.common.Address(

@@ -35,9 +35,20 @@ public class ClusterTopicRouteService extends TopicRouteService {
         return getAllMessageQueueView(ctx, topicName);
     }
 
+    //todo 集群模式为proxy返回topic路由
+    /**
+     * 出参是一组MessageQueue。
+     * topic；
+     * id：queueId；
+     * permission：读写权限；
+     * broker：broker名、地址（proxy地址）等；
+     * MessageType：5.x多了MessageType，在topic纬度定义消息类型，分成四类：普通NORMAL、顺序FIFO、延迟DELAY、事务TRANSACTION。
+     */
     @Override
     public ProxyTopicRouteData getTopicRouteForProxy(ProxyContext ctx, List<Address> requestHostAndPortList,
         String topicName) throws Exception {
+
+        //todo 查询topic路由信息 先走本地caffeine缓存，cache miss走nameserver
         TopicRouteData topicRouteData = getAllMessageQueueView(ctx, topicName).getTopicRouteData();
 
         ProxyTopicRouteData proxyTopicRouteData = new ProxyTopicRouteData();
@@ -48,6 +59,7 @@ public class ClusterTopicRouteService extends TopicRouteService {
             proxyBrokerData.setCluster(brokerData.getCluster());
             proxyBrokerData.setBrokerName(brokerData.getBrokerName());
             for (Long brokerId : brokerData.getBrokerAddrs().keySet()) {
+                //todo 替换每一个broker地址为客户端传入endpoint，即rocketmq-proxy实例地址；
                 proxyBrokerData.getBrokerAddrs().put(brokerId, requestHostAndPortList);
             }
             proxyTopicRouteData.getBrokerDatas().add(proxyBrokerData);

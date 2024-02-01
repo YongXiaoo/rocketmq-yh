@@ -87,18 +87,23 @@ public class ClientActivity extends AbstractMessingActivity {
         this.messagingProcessor.registerProducerListener(new ProducerChangeListenerImpl());
     }
 
+    //todo proxy侧心跳处理
     public CompletableFuture<HeartbeatResponse> heartbeat(ProxyContext ctx, HeartbeatRequest request) {
         CompletableFuture<HeartbeatResponse> future = new CompletableFuture<>();
 
         try {
+            //todo settings 是一个全新的概念
             Settings clientSettings = grpcClientSettingsManager.getClientSettings(ctx);
             if (clientSettings == null) {
+                //todo settings 不存在返回异常 40015
                 future.complete(HeartbeatResponse.newBuilder()
                     .setStatus(ResponseBuilder.getInstance().buildStatus(Code.UNRECOGNIZED_CLIENT_TYPE, "cannot find client settings for this client"))
                     .build());
                 return future;
             }
+            //todo 针对 producer consumer 做不同处理
             switch (clientSettings.getClientType()) {
+                //todo 注册 producer
                 case PRODUCER: {
                     for (Resource topic : clientSettings.getPublishing().getTopicsList()) {
                         String topicName = GrpcConverter.getInstance().wrapResourceWithNamespace(topic);
@@ -106,6 +111,7 @@ public class ClientActivity extends AbstractMessingActivity {
                     }
                     break;
                 }
+                //todo 注册 consumer
                 case PUSH_CONSUMER:
                 case SIMPLE_CONSUMER: {
                     validateConsumerGroup(request.getGroup());
