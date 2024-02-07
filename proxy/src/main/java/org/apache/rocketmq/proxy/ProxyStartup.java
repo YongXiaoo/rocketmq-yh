@@ -78,6 +78,7 @@ public class ProxyStartup {
 
             MessagingProcessor messagingProcessor = createMessagingProcessor();
 
+            //todo acl认证 （与grpc客户端之间的认证）
             List<AccessValidator> accessValidators = loadAccessValidators();
             // create grpcServer
             GrpcServer grpcServer = GrpcServerBuilder.newBuilder(executor, ConfigurationManager.getProxyConfig().getGrpcServerPort())
