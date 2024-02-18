@@ -21,6 +21,7 @@ import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 public class Producer {
 
@@ -32,14 +33,16 @@ public class Producer {
     public static void main(String[] args) throws MQClientException, InterruptedException {
 
         DefaultMQProducer producer = new DefaultMQProducer(PRODUCER_GROUP);
+        producer.setMaxMessageSize(8 * 1024 * 1024);
 
         // Uncomment the following line while debugging, namesrvAddr should be set to your local address
-        //producer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
+        producer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
 
         producer.start();
         for (int i = 0; i < 128; i++) {
             try {
-                Message msg = new Message(TOPIC, TAG, "OrderID188", "Hello world".getBytes(StandardCharsets.UTF_8));
+                String s = BigString();
+                Message msg = new Message(TOPIC, TAG, "OrderID188", s.getBytes(StandardCharsets.UTF_8));
                 SendResult sendResult = producer.send(msg);
                 System.out.printf("%s%n", sendResult);
             } catch (Exception e) {
@@ -48,5 +51,24 @@ public class Producer {
         }
 
         producer.shutdown();
+    }
+
+    public static String BigString(){
+        String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        int sizeInBytes =  5 *  1024 *  1024; //  5MB in bytes
+        int length = chars.length(); // The total number of possible characters
+        StringBuilder sb = new StringBuilder(sizeInBytes);
+        Random rnd = new Random();
+
+        for (int i =  0; i < sizeInBytes; i++) {
+            // Select a random index within the range of valid characters
+            int index = rnd.nextInt(length);
+            // Append the selected character to the StringBuilder
+            sb.append(chars.charAt(index));
+        }
+
+        // Convert the StringBuilder to a String
+        String randomString = sb.toString();
+        return randomString;
     }
 }
