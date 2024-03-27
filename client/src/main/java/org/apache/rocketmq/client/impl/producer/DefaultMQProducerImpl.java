@@ -705,6 +705,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         long beginTimestampFirst = System.currentTimeMillis();
         long beginTimestampPrev = beginTimestampFirst;
         long endTimestamp = beginTimestampFirst;
+        String brokerAddr = null;
         TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());
         if (topicPublishInfo != null && topicPublishInfo.ok()) {
             boolean callTimeout = false;
@@ -723,7 +724,9 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName, resetIndex);
                 if (mqSelected != null) {
                     mq = mqSelected;
-                    brokersSent[times] = mq.getBrokerName();
+                    String brokerName = this.mQClientFactory.getBrokerNameFromMessageQueue(mq);
+                    brokerAddr = this.mQClientFactory.findBrokerAddressInPublish(brokerName);
+                    brokersSent[times] = brokerAddr;
                     try {
                         beginTimestampPrev = System.currentTimeMillis();
                         if (times > 0) {
@@ -735,6 +738,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                             callTimeout = true;
                             break;
                         }
+
 
                         sendResult = this.sendKernelImpl(msg, mq, communicationMode, sendCallback, topicPublishInfo, timeout - costTime);
                         endTimestamp = System.currentTimeMillis();
@@ -821,7 +825,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
             MQClientException mqClientException = new MQClientException(info, exception);
             if (callTimeout) {
-                throw new RemotingTooMuchRequestException("sendDefaultImpl call timeout");
+                throw new RemotingTooMuchRequestException("sendDefaultImpl call timeout" + info);
             }
 
             if (exception instanceof MQBrokerException) {
@@ -877,6 +881,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
         SendMessageContext context = null;
         if (brokerAddr != null) {
+//            brokerAddr = "128.0.0.1:10991";
             brokerAddr = MixAll.brokerVIPChannel(this.defaultMQProducer.isSendMessageWithVIPChannel(), brokerAddr);
 
             byte[] prevBody = msg.getBody();

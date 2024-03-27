@@ -78,7 +78,7 @@ public class ProxyStartup {
 
             MessagingProcessor messagingProcessor = createMessagingProcessor();
 
-            //todo acl认证 （与grpc客户端之间的认证）
+            //todo acl认证 （与grpc客户端之间的认证） 默认使用与broker 一样的ACL认证
             List<AccessValidator> accessValidators = loadAccessValidators();
             // create grpcServer
             GrpcServer grpcServer = GrpcServerBuilder.newBuilder(executor, ConfigurationManager.getProxyConfig().getGrpcServerPort())
@@ -95,6 +95,7 @@ public class ProxyStartup {
             // start servers one by one.
             PROXY_START_AND_SHUTDOWN.start();
 
+            //todo jvm钩子 程序退出之前执行
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 log.info("try to shutdown server");
                 try {
@@ -181,6 +182,7 @@ public class ProxyStartup {
         MessagingProcessor messagingProcessor;
 
         if (ProxyMode.isClusterMode(proxyModeStr)) {
+            //todo 创建默认的消息处理器 集群模式 重点关注 后续接着看
             messagingProcessor = DefaultMessagingProcessor.createForClusterMode();
             ProxyMetricsManager proxyMetricsManager = ProxyMetricsManager.initClusterMode(ConfigurationManager.getProxyConfig());
             PROXY_START_AND_SHUTDOWN.appendStartAndShutdown(proxyMetricsManager);

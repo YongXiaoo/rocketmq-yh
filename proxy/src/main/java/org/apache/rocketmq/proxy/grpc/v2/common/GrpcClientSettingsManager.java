@@ -67,11 +67,13 @@ public class GrpcClientSettingsManager extends ServiceThread implements StartAnd
 
     public Settings getClientSettings(ProxyContext ctx) {
         String clientId = ctx.getClientID();
+        //todo 获取当前配置
         Settings settings = getRawClientSettings(clientId);
         if (settings == null) {
             return null;
         }
         if (settings.hasPublishing()) {
+            //todo 合并 producer配置
             settings = mergeProducerData(settings);
         } else if (settings.hasSubscription()) {
             settings = mergeSubscriptionData(ctx, settings,
@@ -81,9 +83,11 @@ public class GrpcClientSettingsManager extends ServiceThread implements StartAnd
     }
 
     protected static Settings mergeProducerData(Settings settings) {
+        //todo 获取proxy 配置
         ProxyConfig config = ConfigurationManager.getProxyConfig();
+        //todo producer 配置
         Settings.Builder builder = settings.toBuilder();
-
+        //todo 使用 proxy 配置覆盖 producer 配置 例如消息体大小限制等
         builder.getBackoffPolicyBuilder()
             .setMaxAttempts(config.getGrpcClientProducerMaxAttempts())
             .setExponentialBackoff(ExponentialBackoff.newBuilder()
@@ -137,9 +141,12 @@ public class GrpcClientSettingsManager extends ServiceThread implements StartAnd
     }
 
     protected static Settings mergeSubscriptionData(Settings settings, SubscriptionGroupConfig groupConfig) {
+        //todo 获取consumer里的配置
         Settings.Builder resultSettingsBuilder = settings.toBuilder();
+        //todo 获取proxy配置
         ProxyConfig config = ConfigurationManager.getProxyConfig();
 
+        //todo 覆盖consumer配置
         resultSettingsBuilder.getSubscriptionBuilder()
             .setReceiveBatchSize(config.getGrpcClientConsumerLongPollingBatchSize())
             .setLongPollingTimeout(Durations.fromMillis(config.getGrpcClientConsumerMaxLongPollingTimeoutMillis()))
@@ -183,8 +190,10 @@ public class GrpcClientSettingsManager extends ServiceThread implements StartAnd
 
     public void updateClientSettings(ProxyContext ctx, String clientId, Settings settings) {
         if (settings.hasSubscription()) {
+            //todo 如果存在订阅关系 则更新 ？？？？？？
             settings = createDefaultConsumerSettingsBuilder().mergeFrom(settings).build();
         }
+        //todo 更新 内存中的 client map
         CLIENT_SETTINGS_MAP.put(clientId, settings);
     }
 

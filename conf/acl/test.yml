@@ -24,4 +24,4 @@ dataVersion:
   - counter: 3
     timestamp: 1704369306502
 globalWhiteRemoteAddresses:
-#- '*'
+- 172.20.10.2

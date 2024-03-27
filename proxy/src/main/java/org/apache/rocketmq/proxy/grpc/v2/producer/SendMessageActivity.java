@@ -64,6 +64,7 @@ public class SendMessageActivity extends AbstractMessingActivity {
         super(messagingProcessor, grpcClientSettingsManager, grpcChannelManager);
     }
 
+    //todo proxy 响应发送消息
     public CompletableFuture<SendMessageResponse> sendMessage(ProxyContext ctx, SendMessageRequest request) {
         CompletableFuture<SendMessageResponse> future = new CompletableFuture<>();
 
@@ -79,10 +80,13 @@ public class SendMessageActivity extends AbstractMessingActivity {
 
             future = this.messagingProcessor.sendMessage(
                 ctx,
+                //todo 队列负载均衡选择器
                 new SendMessageQueueSelector(request),
                 GrpcConverter.getInstance().wrapResourceWithNamespace(topic),
                 buildSysFlag(message),
+                //todo message 模型转换
                 buildMessage(ctx, request.getMessagesList(), topic)
+                    //todo 出参模型转换
             ).thenApply(result -> convertToSendMessageResponse(ctx, request, result));
         } catch (Throwable t) {
             future.completeExceptionally(t);
@@ -377,11 +381,12 @@ public class SendMessageActivity extends AbstractMessingActivity {
                 }
                 AddressableMessageQueue targetMessageQueue;
                 if (StringUtils.isNotEmpty(shardingKey)) {
-                    // With shardingKey
+                    // With shardingKey todo 顺序消息 根据 hash算法计算
                     List<AddressableMessageQueue> writeQueues = messageQueueView.getWriteSelector().getQueues();
                     int bucket = Hashing.consistentHash(shardingKey.hashCode(), writeQueues.size());
                     targetMessageQueue = writeQueues.get(bucket);
                 } else {
+                    //todo 普通消息 从可写队列里 轮询一个queue
                     targetMessageQueue = messageQueueView.getWriteSelector().selectOneByPipeline(false);
                 }
                 return targetMessageQueue;

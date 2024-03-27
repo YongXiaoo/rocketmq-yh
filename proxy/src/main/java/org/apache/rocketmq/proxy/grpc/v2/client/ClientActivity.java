@@ -248,14 +248,18 @@ public class ClientActivity extends AbstractMessingActivity {
                 for (Resource topic : settings.getPublishing().getTopicsList()) {
                     validateTopic(topic);
                     String topicName = GrpcConverter.getInstance().wrapResourceWithNamespace(topic);
+                    //todo 注册生产者
                     grpcClientChannel = registerProducer(ctx, topicName);
+                    //todo 注入输出流
                     grpcClientChannel.setClientObserver(responseObserver);
                 }
                 break;
             case SUBSCRIPTION:
                 validateConsumerGroup(settings.getSubscription().getGroup());
                 String groupName = GrpcConverter.getInstance().wrapResourceWithNamespace(settings.getSubscription().getGroup());
+                //todo 注册消费者 （会更新订阅关系）
                 grpcClientChannel = registerConsumer(ctx, groupName, settings.getClientType(), settings.getSubscription().getSubscriptionsList(), true);
+                //todo 注入输出流
                 grpcClientChannel.setClientObserver(responseObserver);
                 break;
             default:
@@ -267,6 +271,7 @@ public class ClientActivity extends AbstractMessingActivity {
                 .asRuntimeException());
             return;
         }
+        //todo 处理 Settings
         TelemetryCommand command = processClientSettings(ctx, request);
         if (grpcClientChannel != null) {
             grpcClientChannel.writeTelemetryCommand(command);
@@ -277,7 +282,9 @@ public class ClientActivity extends AbstractMessingActivity {
 
     protected TelemetryCommand processClientSettings(ProxyContext ctx, TelemetryCommand request) {
         String clientId = ctx.getClientID();
+        //todo 更新内存中客户端Settings
         grpcClientSettingsManager.updateClientSettings(ctx, clientId, request.getSettings());
+        //todo 合并客户端Settings和proxy配置 并返回
         Settings settings = grpcClientSettingsManager.getClientSettings(ctx);
         return TelemetryCommand.newBuilder()
             .setStatus(ResponseBuilder.getInstance().buildStatus(Code.OK, Code.OK.name()))

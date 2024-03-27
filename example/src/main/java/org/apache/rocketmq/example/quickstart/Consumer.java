@@ -70,6 +70,9 @@ public class Consumer {
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         });
 
+
+//        consumer.setClientRebalance(false);
+
         /*
          *  Launch the consumer instance.
          */

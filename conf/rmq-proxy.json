@@ -3,5 +3,6 @@
   "namesrvAddr": "127.0.0.1:9876",
   "remotingListenPort": 8081,
   "grpcServerPort": 8082,
-  "enableAcl": true
+  "enableAcl": true,
+  "useEndpointPortFromRequest": true
 }

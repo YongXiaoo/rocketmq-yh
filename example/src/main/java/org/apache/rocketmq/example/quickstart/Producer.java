@@ -120,6 +120,6 @@ public class Producer {
         /*
          * Shut down once the producer instance is no longer in use.
          */
-        producer.shutdown();
+//        producer.shutdown();
     }
 }
