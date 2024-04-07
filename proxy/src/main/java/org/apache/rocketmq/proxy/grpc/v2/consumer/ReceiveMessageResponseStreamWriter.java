@@ -53,6 +53,10 @@ public class ReceiveMessageResponseStreamWriter {
         this.streamObserver = observer;
     }
 
+    //todo 可以看到拉消息走的是ServerStream，proxy会按顺序写三种包响应客户端：
+    // STATUS：1个状态包，标识本次receiveMessage响应是否成功；
+    // MESSAGE：0-n个消息包，即拉到的消息；
+    // DELIVERY_TIMESTAMP：1个响应时间戳包，这个主要是metrics采集用，可以忽略；
     public void writeAndComplete(ProxyContext ctx, ReceiveMessageRequest request, PopResult popResult) {
         PopStatus status = popResult.getPopStatus();
         List<MessageExt> messageFoundList = popResult.getMsgFoundList();
@@ -64,9 +68,11 @@ public class ReceiveMessageResponseStreamWriter {
                             .setStatus(ResponseBuilder.getInstance().buildStatus(Code.MESSAGE_NOT_FOUND, "no match message"))
                             .build());
                     } else {
+                        //todo 1个status包
                         streamObserver.onNext(ReceiveMessageResponse.newBuilder()
                             .setStatus(ResponseBuilder.getInstance().buildStatus(Code.OK, Code.OK.name()))
                             .build());
+                        //todo n个Message包
                         Iterator<MessageExt> messageIterator = messageFoundList.iterator();
                         while (messageIterator.hasNext()) {
                             MessageExt curMessageExt = messageIterator.next();
@@ -101,6 +107,7 @@ public class ReceiveMessageResponseStreamWriter {
             writeResponseWithErrorIgnore(
                 ReceiveMessageResponse.newBuilder().setStatus(ResponseBuilder.getInstance().buildStatus(t)).build());
         } finally {
+            //todo 1个响应时间戳包
             onComplete();
         }
     }
@@ -148,10 +155,12 @@ public class ReceiveMessageResponseStreamWriter {
     }
 
     protected void onComplete() {
+        //todo 1个响应时间戳包
         writeResponseWithErrorIgnore(ReceiveMessageResponse.newBuilder()
             .setDeliveryTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
             .build());
         try {
+            //todo END_STREAM
             streamObserver.onCompleted();
         } catch (Exception e) {
             log.error("err when complete receive message response", e);

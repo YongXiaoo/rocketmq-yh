@@ -107,8 +107,9 @@ public class RouteActivity extends AbstractMessingActivity {
 
         try {
             validateTopicAndConsumerGroup(request.getTopic(), request.getGroup());
+            //todo 1.和查询路由一样，将入参转为地址列表
             List<org.apache.rocketmq.proxy.common.Address> addressList = this.convertToAddressList(request.getEndpoints());
-
+            //todo 2.和查询路由一样 先查本地缓存 没有再从nameserver查询
             ProxyTopicRouteData proxyTopicRouteData = this.messagingProcessor.getTopicRouteDataForProxy(
                 ctx,
                 addressList,
@@ -121,15 +122,19 @@ public class RouteActivity extends AbstractMessingActivity {
                 fifo = true;
             }
 
+            //todo 3.重点 出参转换
             List<Assignment> assignments = new ArrayList<>();
             Map<String, Map<Long, Broker>> brokerMap = buildBrokerMap(proxyTopicRouteData.getBrokerDatas());
+            //todo  循环队列
             for (QueueData queueData : proxyTopicRouteData.getQueueDatas()) {
+                //todo 3.1 选择可读队列
                 if (PermName.isReadable(queueData.getPerm()) && queueData.getReadQueueNums() > 0) {
                     Map<Long, Broker> brokerIdMap = brokerMap.get(queueData.getBrokerName());
                     if (brokerIdMap != null) {
                         Broker broker = brokerIdMap.get(MixAll.MASTER_ID);
                         Permission permission = this.convertToPermission(queueData.getPerm());
                         if (fifo) {
+                            //todo 顺序消息
                             for (int i = 0; i < queueData.getReadQueueNums(); i++) {
                                 MessageQueue defaultMessageQueue = MessageQueue.newBuilder()
                                     .setTopic(request.getTopic())
@@ -142,11 +147,14 @@ public class RouteActivity extends AbstractMessingActivity {
                                     .build());
                             }
                         } else {
+                            //todo 普通消息
+                            // 最终返回客户端的Assignments只包含topic下master broker数量个queueId=-1的MessageQueue，
+                            // 且地址都为proxy端点。
                             MessageQueue defaultMessageQueue = MessageQueue.newBuilder()
-                                .setTopic(request.getTopic())
-                                .setId(-1)
+                                .setTopic(request.getTopic())  //入参 topic
+                                .setId(-1)  //队列id -1
                                 .setPermission(permission)
-                                .setBroker(broker)
+                                .setBroker(broker) //master broker ---- address=endpoints
                                 .build();
                             assignments.add(Assignment.newBuilder()
                                 .setMessageQueue(defaultMessageQueue)

@@ -138,6 +138,7 @@ public class AckMessageActivity extends AbstractMessingActivity {
 
         try {
             String handleString = this.getHandleString(ctx, group, request, ackMessageEntry);
+            //todo ackMessage
             CompletableFuture<AckResult> ackResultFuture = this.messagingProcessor.ackMessage(
                 ctx,
                 ReceiptHandle.decode(handleString),
@@ -195,8 +196,10 @@ public class AckMessageActivity extends AbstractMessingActivity {
     protected String getHandleString(ProxyContext ctx, String group, AckMessageRequest request, AckMessageEntry ackMessageEntry) {
         String handleString = ackMessageEntry.getReceiptHandle();
 
+        //todo 移除receiptHandle
         MessageReceiptHandle messageReceiptHandle = messagingProcessor.removeReceiptHandle(ctx, grpcChannelManager.getChannel(ctx.getClientID()), group, ackMessageEntry.getMessageId(), ackMessageEntry.getReceiptHandle());
         if (messageReceiptHandle != null) {
+            //todo 防止是renew的消息 需要取renew逻辑的receiptHandle
             handleString = messageReceiptHandle.getReceiptHandleStr();
         }
         return handleString;

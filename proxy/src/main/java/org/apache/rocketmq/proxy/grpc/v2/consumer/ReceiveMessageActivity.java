@@ -116,29 +116,42 @@ public class ReceiveMessageActivity extends AbstractMessingActivity {
                 return;
             }
 
+            //todo s1. proxy处理receive请求
             this.messagingProcessor.popMessage(
                     ctx,
                     new ReceiveMessageQueueSelector(
+                            //todo 队列选择器
                         request.getMessageQueue().getBroker().getName()
                     ),
                     group,
                     topic,
+                    //todo 最大32
                     request.getBatchSize(),
+                    //todo 60s ---- push 消费 proxy决定
                     actualInvisibleTime,
+                    //todo 20s ---- Settings同步 proxy决定
                     pollingTime,
                     ConsumeInitMode.MAX,
+                    //todo topic tag
                     subscriptionData,
+                    //todo 是否是顺序消息
                     fifo,
+                    //todo 过滤器重试次数
                     new PopMessageResultFilterImpl(maxAttempts),
                     request.hasAttemptId() ? request.getAttemptId() : null,
+                    //todo 剩余请求超时时间
                     timeRemaining
                 ).thenAccept(popResult -> {
+                    //todo s2. broker返回消息
+                //todo push消费，有一个renew逻辑（autoRenew=true，默认开启），将checkpoint信息（receiptHandle）缓存；（
+                        // todo 这段逻辑没有也不影响流程）
                     if (proxyConfig.isEnableProxyAutoRenew() && request.getAutoRenew()) {
                         if (PopStatus.FOUND.equals(popResult.getPopStatus())) {
                             List<MessageExt> messageExtList = popResult.getMsgFoundList();
                             for (MessageExt messageExt : messageExtList) {
                                 String receiptHandle = messageExt.getProperty(MessageConst.PROPERTY_POP_CK);
                                 if (receiptHandle != null) {
+                                    //todo checkpoint信息被转换为ReceiptHandle
                                     MessageReceiptHandle messageReceiptHandle =
                                         new MessageReceiptHandle(group, topic, messageExt.getQueueId(), receiptHandle, messageExt.getMsgId(),
                                             messageExt.getQueueOffset(), messageExt.getReconsumeTimes());
@@ -147,6 +160,7 @@ public class ReceiveMessageActivity extends AbstractMessingActivity {
                             }
                         }
                     }
+                    //todo 响应客户端
                     writer.writeAndComplete(ctx, request, popResult);
                 })
                 .exceptionally(t -> {
@@ -181,6 +195,7 @@ public class ReceiveMessageActivity extends AbstractMessingActivity {
                 MessageQueueSelector messageQueueSelector = messageQueueView.getReadSelector();
 
                 if (StringUtils.isNotBlank(brokerName)) {
+                    //todo broker侧直接取consumer指定的broker的queue，queueId同样等于-1
                     addressableMessageQueue = messageQueueSelector.getQueueByBrokerName(brokerName);
                 }
 

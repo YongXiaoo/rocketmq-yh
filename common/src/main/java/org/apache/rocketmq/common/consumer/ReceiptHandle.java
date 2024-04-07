@@ -54,16 +54,16 @@ public class ReceiptHandle {
             throw new IllegalArgumentException("Parse failed, dataList size " + dataList.size());
         }
         long startOffset = Long.parseLong(dataList.get(0));
-        long retrieveTime = Long.parseLong(dataList.get(1));
-        long invisibleTime = Long.parseLong(dataList.get(2));
-        int reviveQueueId = Integer.parseInt(dataList.get(3));
+        long retrieveTime = Long.parseLong(dataList.get(1)); //todo popTime 拉消息时间
+        long invisibleTime = Long.parseLong(dataList.get(2)); //todo invisibleTime 60s
+        int reviveQueueId = Integer.parseInt(dataList.get(3)); //todo receive topic 的 queueId
         String topicType = dataList.get(4);
         String brokerName = dataList.get(5);
-        int queueId = Integer.parseInt(dataList.get(6));
-        long offset = Long.parseLong(dataList.get(7));
+        int queueId = Integer.parseInt(dataList.get(6)); //todo 用户topic的queueId
+        long offset = Long.parseLong(dataList.get(7)); //todo 用户topic的queue逻辑offset
         long commitLogOffset = -1L;
         if (dataList.size() >= 9) {
-            commitLogOffset = Long.parseLong(dataList.get(8));
+            commitLogOffset = Long.parseLong(dataList.get(8)); //todo 物理offset
         }
 
         return new ReceiptHandleBuilder()

@@ -90,10 +90,12 @@ public class ConsumerProcessor extends AbstractProcessor {
     ) {
         CompletableFuture<PopResult> future = new CompletableFuture<>();
         try {
+            //todo 选择队列
             AddressableMessageQueue messageQueue = queueSelector.select(ctx, this.serviceManager.getTopicRouteService().getCurrentMessageQueueView(ctx, topic));
             if (messageQueue == null) {
                 throw new ProxyException(ProxyExceptionCode.FORBIDDEN, "no readable queue");
             }
+            //todo 向broker发起长轮询
             return popMessage(ctx, messageQueue, consumerGroup, topic, maxMsgNums, invisibleTime, pollTime, initMode,
                 subscriptionData, fifo, popMessageResultFilter, attemptId, timeoutMillis);
         }  catch (Throwable t) {
@@ -125,6 +127,7 @@ public class ConsumerProcessor extends AbstractProcessor {
                 maxMsgNums = ProxyUtils.MAX_MSG_NUMS_FOR_POP_REQUEST;
             }
 
+            //todo grpc协议 -> remoting协议
             PopMessageRequestHeader requestHeader = new PopMessageRequestHeader();
             requestHeader.setConsumerGroup(consumerGroup);
             requestHeader.setTopic(topic);
@@ -138,12 +141,15 @@ public class ConsumerProcessor extends AbstractProcessor {
             requestHeader.setOrder(fifo);
             requestHeader.setAttemptId(attemptId);
 
+            //todo 向broker发起长轮询 broker将checkpoint信息放在返回的每条message的properties的POP_CK
+            // 包含ack/unack消息需要的必要信息，比如queueId、offset等信息。
             future = this.serviceManager.getMessageService().popMessage(
                     ctx,
                     messageQueue,
                     requestHeader,
                     timeoutMillis)
                 .thenApplyAsync(popResult -> {
+                    //todo  消息过滤
                     if (PopStatus.FOUND.equals(popResult.getPopStatus()) &&
                         popResult.getMsgFoundList() != null &&
                         !popResult.getMsgFoundList().isEmpty() &&
@@ -165,6 +171,7 @@ public class ConsumerProcessor extends AbstractProcessor {
                                     popMessageResultFilter.filterMessage(ctx, consumerGroup, subscriptionData, messageExt);
                                 switch (filterResult) {
                                     case NO_MATCH:
+                                        //todo tag不匹配 直接ack
                                         this.messagingProcessor.ackMessage(
                                             ctx,
                                             ReceiptHandle.decode(handleString),
@@ -221,8 +228,10 @@ public class ConsumerProcessor extends AbstractProcessor {
     ) {
         CompletableFuture<AckResult> future = new CompletableFuture<>();
         try {
+            //todo 校验句柄未过期（默认invisibleTime=60s，60s收到消息没ack，句柄就失效） INVALID_RECEIPT_HANDLE
             this.validateReceiptHandle(handle);
 
+            //todo 转换为remoting协议
             AckMessageRequestHeader ackMessageRequestHeader = new AckMessageRequestHeader();
             ackMessageRequestHeader.setConsumerGroup(consumerGroup);
             ackMessageRequestHeader.setTopic(handle.getRealTopic(topic, consumerGroup));

@@ -249,6 +249,7 @@ public class GrpcMessagingApplication extends MessagingServiceGrpc.MessagingServ
         }
     }
 
+    //todo proxy 响应queryAssignment 入口
     @Override
     public void queryAssignment(QueryAssignmentRequest request,
         StreamObserver<QueryAssignmentResponse> responseObserver) {
@@ -268,6 +269,7 @@ public class GrpcMessagingApplication extends MessagingServiceGrpc.MessagingServ
         }
     }
 
+    //todo proxy 处理拉取消息请求入口
     @Override
     public void receiveMessage(ReceiveMessageRequest request, StreamObserver<ReceiveMessageResponse> responseObserver) {
         Function<Status, ReceiveMessageResponse> statusResponseCreator = status -> ReceiveMessageResponse.newBuilder().setStatus(status).build();
@@ -285,6 +287,7 @@ public class GrpcMessagingApplication extends MessagingServiceGrpc.MessagingServ
         }
     }
 
+    //todo proxy响应ackMessage入口
     @Override
     public void ackMessage(AckMessageRequest request, StreamObserver<AckMessageResponse> responseObserver) {
         Function<Status, AckMessageResponse> statusResponseCreator = status -> AckMessageResponse.newBuilder().setStatus(status).build();

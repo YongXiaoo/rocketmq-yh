@@ -28,7 +28,7 @@ import org.apache.rocketmq.proxy.common.ProxyContext;
 import org.apache.rocketmq.proxy.common.RenewEvent;
 import org.apache.rocketmq.proxy.service.ServiceManager;
 import org.apache.rocketmq.proxy.service.receipt.DefaultReceiptHandleManager;
-
+// todo 负责管理缓存的receiptHandle（checkpoint）
 public class ReceiptHandleProcessor extends AbstractProcessor {
     protected final static Logger log = LoggerFactory.getLogger(LoggerName.PROXY_LOGGER_NAME);
     protected DefaultReceiptHandleManager receiptHandleManager;
@@ -57,10 +57,12 @@ public class ReceiptHandleProcessor extends AbstractProcessor {
         return ProxyContext.createForInner(this.getClass().getSimpleName() + actionName);
     }
 
+    //todo receiveMessage时，缓存receiptHandle
     public void addReceiptHandle(ProxyContext ctx, Channel channel, String group, String msgID, MessageReceiptHandle messageReceiptHandle) {
         receiptHandleManager.addReceiptHandle(ctx, channel, group, msgID, messageReceiptHandle);
     }
 
+    //todo ack/unack时，清除缓存的receiptHandle
     public MessageReceiptHandle removeReceiptHandle(ProxyContext ctx, Channel channel, String group, String msgID, String receiptHandle) {
         return receiptHandleManager.removeReceiptHandle(ctx, channel, group, msgID, receiptHandle);
     }

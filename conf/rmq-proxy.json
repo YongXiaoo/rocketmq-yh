@@ -4,5 +4,7 @@
   "remotingListenPort": 8081,
   "grpcServerPort": 8082,
   "enableAcl": true,
-  "useEndpointPortFromRequest": true
+  "useEndpointPortFromRequest": true,
+  "metricCollectorMode": "proxy",
+  "metricsExporterType": "LOG"
 }

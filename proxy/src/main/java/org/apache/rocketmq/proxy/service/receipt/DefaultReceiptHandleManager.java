@@ -112,6 +112,7 @@ public class DefaultReceiptHandleManager extends AbstractStartAndShutdown implem
         this.appendStartAndShutdown(new StartAndShutdown() {
             @Override
             public void start() throws Exception {
+                // todo 每5s执行一次
                 scheduledExecutorService.scheduleWithFixedDelay(() -> scheduleRenewTask(), 0,
                     ConfigurationManager.getProxyConfig().getRenewSchedulePeriodMillis(), TimeUnit.MILLISECONDS);
             }
@@ -141,24 +142,31 @@ public class DefaultReceiptHandleManager extends AbstractStartAndShutdown implem
         return this.consumerManager.findChannel(groupKey.getGroup(), groupKey.getChannel()) == null;
     }
 
-    protected void scheduleRenewTask() {
+    protected void scheduleRenewTask() { //todo 每5s执行一次
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             ProxyConfig proxyConfig = ConfigurationManager.getProxyConfig();
+            //todo channel + group -> ReceiptHandleGroup
             for (Map.Entry<ReceiptHandleGroupKey, ReceiptHandleGroup> entry : receiptHandleGroupMap.entrySet()) {
                 ReceiptHandleGroupKey key = entry.getKey();
+                //todo 根据 channel + group 寻找 consumer 心跳
                 if (clientIsOffline(key)) {
+                    //todo 如果consumer 心跳不存在 清除所有 handle, 对所有handle执行changeInvisibleTime(nack)
                     clearGroup(key);
                     continue;
                 }
 
                 ReceiptHandleGroup group = entry.getValue();
+                //todo messageId -> handle -> MessageReceiptHandle
                 group.scan((msgID, handleStr, v) -> {
                     long current = System.currentTimeMillis();
                     ReceiptHandle handle = ReceiptHandle.decode(v.getReceiptHandleStr());
+                    //todo 判断是否执行renew
                     if (handle.getNextVisibleTime() - current > proxyConfig.getRenewAheadTimeMillis()) {
                         return;
                     }
+                    //todo pop消息再次可见之前10s (一般就是50s左右未ack/nack)，进行renew
+                    // pop时间 + invisible时间 - 当前时间 <= 10s
                     renewalWorkerService.submit(() -> renewMessage(key, group, msgID, handleStr));
                 });
             }
@@ -177,15 +185,19 @@ public class DefaultReceiptHandleManager extends AbstractStartAndShutdown implem
         }
     }
 
+    //todo renew底层是用handle回复broker一个changeInvisibleTime，
+    // 代表consumer正常收到消息，需要过段时间重试（默认最多renew3次，不可见时间1m、3m、5m）。
     protected CompletableFuture<MessageReceiptHandle> startRenewMessage(ReceiptHandleGroupKey key, MessageReceiptHandle messageReceiptHandle) {
         CompletableFuture<MessageReceiptHandle> resFuture = new CompletableFuture<>();
         ProxyConfig proxyConfig = ConfigurationManager.getProxyConfig();
         long current = System.currentTimeMillis();
         try {
+            //todo renew >= 3次结束
             if (messageReceiptHandle.getRenewRetryTimes() >= proxyConfig.getMaxRenewRetryTimes()) {
                 log.warn("handle has exceed max renewRetryTimes. handle:{}", messageReceiptHandle);
                 return CompletableFuture.completedFuture(null);
             }
+            //todo 当前时间 - pop时间 < 3 小时 （proxy设置指定）
             if (current - messageReceiptHandle.getConsumeTimestamp() < proxyConfig.getRenewMaxTimeMillis()) {
                 CompletableFuture<AckResult> future = new CompletableFuture<>();
                 eventListener.fireEvent(new RenewEvent(key, messageReceiptHandle, RENEW_POLICY.nextDelayDuration(messageReceiptHandle.getRenewTimes()), RenewEvent.EventType.RENEW, future));
@@ -199,6 +211,9 @@ public class DefaultReceiptHandleManager extends AbstractStartAndShutdown implem
                             resFuture.complete(null);
                         }
                     } else if (AckStatus.OK.equals(ackResult.getStatus())) {
+                        //todo 更新 handle
+                        // 如果changeInvisibleTime的新handle不ack或nack，一样会导致消息重投。
+                        // 所以肯定要在consumer随后的ack或nack时，将consumer的原始handle转换为renew后的handle，传给broker
                         messageReceiptHandle.updateReceiptHandle(ackResult.getExtraInfo());
                         messageReceiptHandle.resetRenewRetryTimes();
                         messageReceiptHandle.incrementRenewTimes();

@@ -39,6 +39,7 @@ public class MessageReceiptHandle {
 
     public MessageReceiptHandle(String group, String topic, int queueId, String receiptHandleStr, String messageId,
         long queueOffset, int reconsumeTimes) {
+        //todo checkpoint信息被转换为ReceiptHandle
         this.originalReceiptHandle = ReceiptHandle.decode(receiptHandleStr);
         this.group = group;
         this.topic = topic;
