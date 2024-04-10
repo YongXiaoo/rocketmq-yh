@@ -166,9 +166,11 @@ public abstract class NettyRemotingAbstract {
     public void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) {
         if (msg != null) {
             switch (msg.getType()) {
+                //todo 处理request请求
                 case REQUEST_COMMAND:
                     processRequestCommand(ctx, msg);
                     break;
+                //todo 处理response请求
                 case RESPONSE_COMMAND:
                     processResponseCommand(ctx, msg);
                     break;
@@ -245,10 +247,13 @@ public abstract class NettyRemotingAbstract {
      * @param cmd request command.
      */
     public void processRequestCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
+        //TODO:从处理器表中根据code获取Pair
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
+        //TODO:决定是使用从处理器表中获取的Pair还是使用默认的Pair（namesrv走的是默认的处理器）
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessorPair : matched;
         final int opaque = cmd.getOpaque();
 
+        //todo pair为null 直接返回报错
         if (pair == null) {
             String error = " request type " + cmd.getCode() + " not supported";
             final RemotingCommand response =
@@ -259,6 +264,8 @@ public abstract class NettyRemotingAbstract {
             return;
         }
 
+
+        //todo 构建处理线程 后续会提交到线程池处理
         Runnable run = buildProcessRequestHandler(ctx, cmd, pair, opaque);
 
         if (pair.getObject1().rejectRequest()) {
@@ -272,6 +279,7 @@ public abstract class NettyRemotingAbstract {
         try {
             final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
             //async execute task, current thread return directly
+            //todo 获取线程池提交线程 执行run方法
             pair.getObject2().submit(requestTask);
         } catch (RejectedExecutionException e) {
             if ((System.currentTimeMillis() % 10000) == 0) {
@@ -310,6 +318,9 @@ public abstract class NettyRemotingAbstract {
                 }
 
                 if (exception == null) {
+                    //todo 处理请求
+                    // @see org.apache.rocketmq.namesrv.processor.DefaultRequestProcessor#processRequest(ChannelHandlerContext ctx,
+                    //        RemotingCommand request) namesrv处理请求类
                     response = pair.getObject1().processRequest(ctx, cmd);
                 } else {
                     response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_ERROR, null);

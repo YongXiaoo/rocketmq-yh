@@ -113,5 +113,6 @@
 
     <root level="INFO">
         <appender-ref ref="DefaultAppender"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

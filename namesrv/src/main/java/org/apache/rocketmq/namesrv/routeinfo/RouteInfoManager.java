@@ -69,6 +69,13 @@ public class RouteInfoManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long DEFAULT_BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    /**
+     * topicQueueTable: key是topic, value是topic下的queue
+     * brokerAddrTable: key是brokerName, value是Broker信息(broker地址，name,集群)
+     * clusterAddrTable: key是集群名称, value是集群下所有broker的name
+     * brokerLiveTable: key是broker地址, value是活着的Broker信息
+     *
+     */
     private final Map<String/* topic */, Map<String, QueueData>> topicQueueTable;
     private final Map<String/* brokerName */, BrokerData> brokerAddrTable;
     private final Map<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
@@ -249,6 +256,7 @@ public class RouteInfoManager {
             if (null == brokerData) {
                 registerFirst = true;
                 brokerData = new BrokerData(clusterName, brokerName, new HashMap<>());
+                //todo 保存broker信息
                 this.brokerAddrTable.put(brokerName, brokerData);
             }
 

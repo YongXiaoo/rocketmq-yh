@@ -25,8 +25,11 @@ import org.apache.rocketmq.common.MixAll;
 
 public class NamesrvConfig {
 
+    //todo 指定ROCKETMQ_HOME,必须，否则本地运行将失败
     private String rocketmqHome = System.getProperty(MixAll.ROCKETMQ_HOME_PROPERTY, System.getenv(MixAll.ROCKETMQ_HOME_ENV));
+    //todo 可以在这个路径下创建kvConfig.json文件，它将会读取值
     private String kvConfigPath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "kvConfig.json";
+    //todo 可以在这个路径下创建namesrv.properties文件，它将会读取值
     private String configStorePath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "namesrv.properties";
     private String productEnvName = "center";
     private boolean clusterTest = false;

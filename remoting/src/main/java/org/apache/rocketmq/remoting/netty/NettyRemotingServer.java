@@ -201,19 +201,27 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(nettyServerConfig.getServerWorkerThreads(),
             new ThreadFactoryImpl("NettyServerCodecThread_"));
 
+        //todo 提前构造好一些handler
         prepareSharableHandlers();
-
+        //todo 设置bossGroup workerGroup
         serverBootstrap.group(this.eventLoopGroupBoss, this.eventLoopGroupSelector)
+                //todo 设置 epoll/nio
             .channel(useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
+                //todo 设置监听队列长度
             .option(ChannelOption.SO_BACKLOG, 1024)
+                //todo 设置复用
             .option(ChannelOption.SO_REUSEADDR, true)
+                //todo 设置保活
             .childOption(ChannelOption.SO_KEEPALIVE, false)
+                //todo 设置延迟
             .childOption(ChannelOption.TCP_NODELAY, true)
+                //todo 设置绑定的ip + port
             .localAddress(new InetSocketAddress(this.nettyServerConfig.getBindAddress(),
                 this.nettyServerConfig.getListenPort()))
             .childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
+                    //todo 自定义处理的handler
                     configChannel(ch);
                 }
             });
@@ -221,6 +229,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         addCustomConfig(serverBootstrap);
 
         try {
+            //todo 启动netty服务端
             ChannelFuture sync = serverBootstrap.bind().sync();
             InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
             if (0 == nettyServerConfig.getListenPort()) {
@@ -274,9 +283,12 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 encoder,
                 new NettyDecoder(),
                 distributionHandler,
+                    //TODO:处理心跳的handler
                 new IdleStateHandler(0, 0,
                     nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
+                    //TODO:处理连接的handler
                 connectionManageHandler,
+                    //TODO:处理读写请求的handler，在上面prepareSharableHandlers()方法中创建的对象
                 serverHandler
             );
     }
@@ -539,6 +551,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
     }
 
+    //todo 负责读写的handler
     @ChannelHandler.Sharable
     public class NettyServerHandler extends SimpleChannelInboundHandler<RemotingCommand> {
 
@@ -547,6 +560,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             int localPort = RemotingHelper.parseSocketAddressPort(ctx.channel().localAddress());
             NettyRemotingAbstract remotingAbstract = NettyRemotingServer.this.remotingServerTable.get(localPort);
             if (localPort != -1 && remotingAbstract != null) {
+                //todo 处理请求
                 remotingAbstract.processMessageReceived(ctx, msg);
                 return;
             }

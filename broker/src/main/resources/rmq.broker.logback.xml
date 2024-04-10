@@ -683,5 +683,6 @@
 
     <root level="INFO">
         <appender-ref ref="DefaultSiftingAppender"/>
+        <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

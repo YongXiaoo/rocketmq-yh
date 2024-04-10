@@ -91,20 +91,29 @@ public class NamesrvController {
         this.namesrvConfig = namesrvConfig;
         this.nettyServerConfig = nettyServerConfig;
         this.nettyClientConfig = nettyClientConfig;
+        //TODO:读取NamesrvConfig中kvConfigPath路径下的文件
         this.kvConfigManager = new KVConfigManager(this);
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
+        //todo 路由管理类 这个对象非常重要，nameserver存储的broker信息和路由表信息都保存在这里
         this.routeInfoManager = new RouteInfoManager(namesrvConfig, this);
         this.configuration = new Configuration(LOGGER, this.namesrvConfig, this.nettyServerConfig);
         this.configuration.setStorePathFromConfig(this.namesrvConfig, "configStorePath");
     }
 
     public boolean initialize() {
+        //todo 加载kv配置
         loadConfig();
+        //todo 创建netty server、netty client
         initiateNetworkComponents();
+        //todo 初始化线程
         initiateThreadExecutors();
+        //todo 注册处理器
         registerProcessor();
+        //todo 开启定时任务
         startScheduleService();
+        //todo 初始化ssl
         initiateSslContext();
+        //todo 初始化钩子
         initiateRpcHooks();
         return true;
     }
@@ -114,12 +123,14 @@ public class NamesrvController {
     }
 
     private void startScheduleService() {
+        //todo 定时探活broker
         this.scanExecutorService.scheduleAtFixedRate(NamesrvController.this.routeInfoManager::scanNotActiveBroker,
             5, this.namesrvConfig.getScanNotActiveBrokerInterval(), TimeUnit.MILLISECONDS);
-
+        //todo 定时打印KV配置
         this.scheduledExecutorService.scheduleAtFixedRate(NamesrvController.this.kvConfigManager::printAllPeriodically,
             1, 10, TimeUnit.MINUTES);
 
+        //todo 定时打印日志
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
                 NamesrvController.this.printWaterMark();
@@ -139,6 +150,7 @@ public class NamesrvController {
         this.defaultExecutor = ThreadUtils.newThreadPoolExecutor(this.namesrvConfig.getDefaultThreadPoolNums(), this.namesrvConfig.getDefaultThreadPoolNums(), 1000 * 60, TimeUnit.MILLISECONDS, this.defaultThreadPoolQueue, new ThreadFactoryImpl("RemotingExecutorThread_"));
 
         this.clientRequestThreadPoolQueue = new LinkedBlockingQueue<>(this.namesrvConfig.getClientRequestThreadPoolQueueCapacity());
+        //todo 客户端请求处理线程
         this.clientRequestExecutor = ThreadUtils.newThreadPoolExecutor(this.namesrvConfig.getClientRequestThreadPoolNums(), this.namesrvConfig.getClientRequestThreadPoolNums(), 1000 * 60, TimeUnit.MILLISECONDS, this.clientRequestThreadPoolQueue, new ThreadFactoryImpl("ClientRequestExecutorThread_"));
     }
 
@@ -219,6 +231,7 @@ public class NamesrvController {
     }
 
     public void start() throws Exception {
+        //todo 启动netty服务端
         this.remotingServer.start();
 
         // In test scenarios where it is up to OS to pick up an available port, set the listening port back to config
@@ -226,6 +239,7 @@ public class NamesrvController {
             nettyServerConfig.setListenPort(this.remotingServer.localListenPort());
         }
 
+        //todo 启动netty客户端（应该是用于controller模式的 暂时不分析）
         this.remotingClient.updateNameServerAddressList(Collections.singletonList(NetworkUtil.getLocalAddress()
             + ":" + nettyServerConfig.getListenPort()));
         this.remotingClient.start();
@@ -233,7 +247,7 @@ public class NamesrvController {
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }
-
+        //todo 底层是启动批量下线broker的一个线程
         this.routeInfoManager.start();
     }
 

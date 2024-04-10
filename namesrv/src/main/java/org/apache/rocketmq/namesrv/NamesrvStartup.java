@@ -48,6 +48,8 @@ public class NamesrvStartup {
     private static NamesrvConfig namesrvConfig = null;
     private static NettyServerConfig nettyServerConfig = null;
     private static NettyClientConfig nettyClientConfig = null;
+
+    //todo 5.x新特性 暂时略过
     private static ControllerConfig controllerConfig = null;
 
     public static void main(String[] args) {
@@ -57,7 +59,9 @@ public class NamesrvStartup {
 
     public static NamesrvController main0(String[] args) {
         try {
+            //todo 解析参数
             parseCommandlineAndConfigFile(args);
+            //todo 创建启动controller
             NamesrvController controller = createAndStartNamesrvController();
             return controller;
         } catch (Throwable e) {
@@ -90,10 +94,15 @@ public class NamesrvStartup {
             return;
         }
 
+        //todo 创建NamesrvConfig对象
         namesrvConfig = new NamesrvConfig();
+        //todo 创建NettyServerConfig对象
         nettyServerConfig = new NettyServerConfig();
+        //todo 创建NettyClientConfig对象
         nettyClientConfig = new NettyClientConfig();
+        //todo 设置监听端口为9876
         nettyServerConfig.setListenPort(9876);
+        //todo -c 选项代表是配置文件
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
             if (file != null) {
@@ -104,6 +113,7 @@ public class NamesrvStartup {
                 MixAll.properties2Object(properties, nettyServerConfig);
                 MixAll.properties2Object(properties, nettyClientConfig);
                 if (namesrvConfig.isEnableControllerInNamesrv()) {
+                    //todo 5.x controller
                     controllerConfig = new ControllerConfig();
                     MixAll.properties2Object(properties, controllerConfig);
                 }
@@ -114,7 +124,10 @@ public class NamesrvStartup {
             }
         }
 
+        //TODO:将命令行参数映射到 NamesrvConfig类中
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), namesrvConfig);
+
+        //todo -p参数值 直接读取
         if (commandLine.hasOption('p')) {
             MixAll.printObjectProperties(logConsole, namesrvConfig);
             MixAll.printObjectProperties(logConsole, nettyServerConfig);
@@ -136,7 +149,9 @@ public class NamesrvStartup {
 
     public static NamesrvController createAndStartNamesrvController() throws Exception {
 
+        //todo 创建NamesrvController对象
         NamesrvController controller = createNamesrvController();
+        //todo 启动NamesrvController
         start(controller);
         NettyServerConfig serverConfig = controller.getNettyServerConfig();
         String tip = String.format("The Name Server boot success. serializeType=%s, address %s:%d", RemotingCommand.getSerializeTypeConfigInThisServer(), serverConfig.getBindAddress(), serverConfig.getListenPort());
@@ -158,7 +173,7 @@ public class NamesrvStartup {
         if (null == controller) {
             throw new IllegalArgumentException("NamesrvController is null");
         }
-
+        //todo 初始化controller
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();
@@ -170,6 +185,7 @@ public class NamesrvStartup {
             return null;
         }));
 
+        //todo 启动netty服务端和服务端以及定时任务
         controller.start();
 
         return controller;

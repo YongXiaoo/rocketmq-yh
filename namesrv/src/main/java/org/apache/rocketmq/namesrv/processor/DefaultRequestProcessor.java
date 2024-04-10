@@ -87,6 +87,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         }
 
         switch (request.getCode()) {
+            //todo 增加kv配置
             case RequestCode.PUT_KV_CONFIG:
                 return this.putKVConfig(ctx, request);
             case RequestCode.GET_KV_CONFIG:
@@ -95,10 +96,13 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 return this.deleteKVConfig(ctx, request);
             case RequestCode.QUERY_DATA_VERSION:
                 return this.queryBrokerTopicConfig(ctx, request);
+            //todo 注册broker
             case RequestCode.REGISTER_BROKER:
                 return this.registerBroker(ctx, request);
+            //todo 下线broker
             case RequestCode.UNREGISTER_BROKER:
                 return this.unregisterBroker(ctx, request);
+            //todo 处理心跳
             case RequestCode.BROKER_HEARTBEAT:
                 return this.brokerHeartbeat(ctx, request);
             case RequestCode.GET_BROKER_MEMBER_GROUP:
@@ -109,10 +113,12 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 return this.wipeWritePermOfBroker(ctx, request);
             case RequestCode.ADD_WRITE_PERM_OF_BROKER:
                 return this.addWritePermOfBroker(ctx, request);
+            //todo 获取主题信息
             case RequestCode.GET_ALL_TOPIC_LIST_FROM_NAMESERVER:
                 return this.getAllTopicListFromNameserver(ctx, request);
             case RequestCode.DELETE_TOPIC_IN_NAMESRV:
                 return this.deleteTopicInNamesrv(ctx, request);
+            //todo 注册topic
             case RequestCode.REGISTER_TOPIC_IN_NAMESRV:
                 return this.registerTopicToNamesrv(ctx, request);
             case RequestCode.GET_KVLIST_BY_NAMESPACE:
@@ -208,6 +214,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(RegisterBrokerResponseHeader.class);
         final RegisterBrokerResponseHeader responseHeader = (RegisterBrokerResponseHeader) response.readCustomHeader();
+        //todo 解析封装了broker信息和topic路由信息的请求头
         final RegisterBrokerRequestHeader requestHeader =
             (RegisterBrokerRequestHeader) request.decodeCommandCustomHeader(RegisterBrokerRequestHeader.class);
 
@@ -229,7 +236,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             // RegisterBrokerBody of old version only contains TopicConfig.
             topicConfigWrapper = extractRegisterTopicConfigFromRequest(request);
         }
-
+        //todo 获取路由信息管理器对象，注册broker
         RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(
             requestHeader.getClusterName(),
             requestHeader.getBrokerAddr(),
