@@ -301,13 +301,21 @@ public class BrokerController {
         final NettyClientConfig nettyClientConfig,
         final MessageStoreConfig messageStoreConfig
     ) {
+        //todo 通过构造器传递进来的配置对象
         this.brokerConfig = brokerConfig;
         this.nettyServerConfig = nettyServerConfig;
         this.nettyClientConfig = nettyClientConfig;
         this.messageStoreConfig = messageStoreConfig;
         this.setStoreHost(new InetSocketAddress(this.getBrokerConfig().getBrokerIP1(), getListenPort()));
+        //todo 创建集群状态管理对象
         this.brokerStatsManager = messageStoreConfig.isEnableLmq() ? new LmqBrokerStatsManager(this.brokerConfig.getBrokerClusterName(), this.brokerConfig.isEnableDetailStat()) : new BrokerStatsManager(this.brokerConfig.getBrokerClusterName(), this.brokerConfig.isEnableDetailStat());
+        //todo 创建广播位移管理对象
         this.broadcastOffsetManager = new BroadcastOffsetManager(this);
+
+        //todo 5.x新特性是否采用 RocksDB存储
+        // 创建topic配置管理对象
+        // 创建消费者组管理对象
+        // 创建消费者位移管理对象
         if (isEnableRocksDBStore()) {
             this.topicConfigManager = messageStoreConfig.isEnableLmq() ? new RocksDBLmqTopicConfigManager(this) : new RocksDBTopicConfigManager(this);
             this.subscriptionGroupManager = messageStoreConfig.isEnableLmq() ? new RocksDBLmqSubscriptionGroupManager(this) : new RocksDBSubscriptionGroupManager(this);
@@ -318,29 +326,42 @@ public class BrokerController {
             this.consumerOffsetManager = messageStoreConfig.isEnableLmq() ? new LmqConsumerOffsetManager(this) : new ConsumerOffsetManager(this);
         }
         this.topicQueueMappingManager = new TopicQueueMappingManager(this);
+        //todo 创建拉取消息的处理器（poll 表示返回且移除）
         this.pullMessageProcessor = new PullMessageProcessor(this);
+        //todo 创建消息处理器（peek 表示返回不移除）
         this.peekMessageProcessor = new PeekMessageProcessor(this);
+        //TODO:挂起拉取请求，当consumer拉取消息时，如果没有消息则挂起请求
         this.pullRequestHoldService = messageStoreConfig.isEnableLmq() ? new LmqPullRequestHoldService(this) : new PullRequestHoldService(this);
+        //todo 创建pop消费处理器
         this.popMessageProcessor = new PopMessageProcessor(this);
+        //todo 创建消息达到监听器
         this.notificationProcessor = new NotificationProcessor(this);
         this.pollingInfoProcessor = new PollingInfoProcessor(this);
+        //todo 创建提交位移监听器
         this.ackMessageProcessor = new AckMessageProcessor(this);
+        //todo 创建改变InvisibleTime处理器
         this.changeInvisibleTimeProcessor = new ChangeInvisibleTimeProcessor(this);
+        //todo 创建发送消息处理器
         this.sendMessageProcessor = new SendMessageProcessor(this);
         this.replyMessageProcessor = new ReplyMessageProcessor(this);
         this.messageArrivingListener = new NotifyMessageArrivingListener(this.pullRequestHoldService, this.popMessageProcessor, this.notificationProcessor);
+        //TODO:创建客户端id有变动的监听器（主要是重平衡时工作)
         this.consumerIdsChangeListener = new DefaultConsumerIdsChangeListener(this);
+        //todo consumer管理对象
         this.consumerManager = new ConsumerManager(this.consumerIdsChangeListener, this.brokerStatsManager, this.brokerConfig);
+        //todo producer管理对象
         this.producerManager = new ProducerManager(this.brokerStatsManager);
+        //todo 消费过滤管理对象（消息过滤时使用）
         this.consumerFilterManager = new ConsumerFilterManager(this);
         this.consumerOrderInfoManager = new ConsumerOrderInfoManager(this);
         this.popInflightMessageCounter = new PopInflightMessageCounter(this);
         this.clientHousekeepingService = new ClientHousekeepingService(this);
+        //TODO:broker向客户端发送消息时会用，比如向客户端发起重平衡
         this.broker2Client = new Broker2Client(this);
         this.scheduleMessageService = new ScheduleMessageService(this);
         this.coldDataPullRequestHoldService = new ColdDataPullRequestHoldService(this);
         this.coldDataCgCtrService = new ColdDataCgCtrService(this);
-
+        //TODO:broker向NameServer发消息时会用
         if (nettyClientConfig != null) {
             this.brokerOuterAPI = new BrokerOuterAPI(nettyClientConfig);
         }
@@ -350,6 +371,8 @@ public class BrokerController {
         this.slaveSynchronize = new SlaveSynchronize(this);
         this.endTransactionProcessor = new EndTransactionProcessor(this);
 
+
+        //todo 创建各种队列
         this.sendThreadPoolQueue = new LinkedBlockingQueue<>(this.brokerConfig.getSendThreadPoolQueueCapacity());
         this.putThreadPoolQueue = new LinkedBlockingQueue<>(this.brokerConfig.getPutThreadPoolQueueCapacity());
         this.pullThreadPoolQueue = new LinkedBlockingQueue<>(this.brokerConfig.getPullThreadPoolQueueCapacity());
@@ -457,6 +480,7 @@ public class BrokerController {
         this.scheduledExecutorService = ThreadUtils.newScheduledThreadPool(1,
             new ThreadFactoryImpl("BrokerControllerScheduledThread", true, getBrokerIdentity()));
 
+        //TODO:发送消息的线程池（生产者发送消息到broker后，会通过这个线程池来处理消息)
         this.sendMessageExecutor = ThreadUtils.newThreadPoolExecutor(
             this.brokerConfig.getSendMessageThreadPoolNums(),
             this.brokerConfig.getSendMessageThreadPoolNums(),
@@ -465,6 +489,7 @@ public class BrokerController {
             this.sendThreadPoolQueue,
             new ThreadFactoryImpl("SendMessageThread_", getBrokerIdentity()));
 
+        //TODO:拉取消息的线程池
         this.pullMessageExecutor = ThreadUtils.newThreadPoolExecutor(
             this.brokerConfig.getPullMessageThreadPoolNums(),
             this.brokerConfig.getPullMessageThreadPoolNums(),
@@ -587,6 +612,7 @@ public class BrokerController {
             @Override
             public void run() {
                 try {
+                    //TODO:持久化consumer offset 到文件中
                     BrokerController.this.consumerOffsetManager.persist();
                 } catch (Throwable e) {
                     LOG.error(
@@ -735,6 +761,7 @@ public class BrokerController {
     }
 
     public boolean initializeMetadata() {
+        //TODO:加载配置,就是将文件中的topic配置信息加载到Map中
         boolean result = this.topicConfigManager.load();
         result = result && this.topicQueueMappingManager.load();
         result = result && this.consumerOffsetManager.load();
@@ -747,6 +774,8 @@ public class BrokerController {
     public boolean initializeMessageStore() {
         boolean result = true;
         try {
+
+            //todo 创建默认的存储对象
             DefaultMessageStore defaultMessageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener, this.brokerConfig, topicConfigManager.getTopicConfigTable());
 
             if (messageStoreConfig.isEnableDLegerCommitLog()) {
@@ -784,6 +813,7 @@ public class BrokerController {
             return false;
         }
 
+        //todo 创建消息存储对象
         result = this.initializeMessageStore();
         if (!result) {
             return false;
@@ -801,6 +831,7 @@ public class BrokerController {
             this.replicasManager.setFenced(true);
         }
 
+        //todo 加载消息存储对象
         if (messageStore != null) {
             registerMessageStoreHook();
             result = this.messageStore.load();
@@ -821,14 +852,18 @@ public class BrokerController {
 
         this.brokerMetricsManager = new BrokerMetricsManager(this);
 
+        //todo 创建各种服务
         if (result) {
 
             initializeRemotingServer();
 
+            //todo 创建各种线程池 主要关注收发线程池
             initializeResources();
 
+            //todo 注册各种处理器
             registerProcessor();
 
+            //todo 启动各种定时任务
             initializeScheduledTasks();
 
             initialTransaction();
@@ -1002,7 +1037,7 @@ public class BrokerController {
     }
 
     public void registerProcessor() {
-        /*
+        /**
          * SendMessageProcessor
          */
         sendMessageProcessor.registerSendMessageHook(sendMessageHookList);

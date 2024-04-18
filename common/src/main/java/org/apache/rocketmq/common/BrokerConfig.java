@@ -25,6 +25,12 @@ import org.apache.rocketmq.common.utils.NetworkUtil;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Broker配置类 包括namesrv
+ * port role acl 等设置
+ */
+
+
 public class BrokerConfig extends BrokerIdentity {
 
     private String brokerConfigPath = null;

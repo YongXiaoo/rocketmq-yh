@@ -209,26 +209,34 @@ public class DefaultMessageStore implements MessageStore {
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig, final BrokerStatsManager brokerStatsManager,
         final MessageArrivingListener messageArrivingListener, final BrokerConfig brokerConfig, final ConcurrentMap<String, TopicConfig> topicConfigTable) throws IOException {
+
+        //todo 通过构造器传递一些配置对象
         this.messageArrivingListener = messageArrivingListener;
         this.brokerConfig = brokerConfig;
         this.messageStoreConfig = messageStoreConfig;
         this.aliveReplicasNum = messageStoreConfig.getTotalReplicas();
         this.brokerStatsManager = brokerStatsManager;
         this.topicConfigTable = topicConfigTable;
+
+        //todo 创建分配MappedFile的服务对象
         this.allocateMappedFileService = new AllocateMappedFileService(this);
         if (messageStoreConfig.isEnableDLegerCommitLog()) {
             this.commitLog = new DLedgerCommitLog(this);
         } else {
+            //todo 创建commitLog对象
             this.commitLog = new CommitLog(this);
         }
 
         this.consumeQueueStore = new ConsumeQueueStore(this, this.messageStoreConfig);
 
+
+        //todo 创建 consumeQueue刷盘服务
         this.flushConsumeQueueService = new FlushConsumeQueueService();
         this.cleanCommitLogService = new CleanCommitLogService();
         this.cleanConsumeQueueService = new CleanConsumeQueueService();
         this.correctLogicOffsetService = new CorrectLogicOffsetService();
         this.storeStatsService = new StoreStatsService(getBrokerIdentity());
+        //TODO:创建IndexFile服务，根据消息key构建索引
         this.indexService = new IndexService(this);
 
         if (!messageStoreConfig.isEnableDLegerCommitLog() && !this.messageStoreConfig.isDuplicationEnable()) {
@@ -238,12 +246,14 @@ public class DefaultMessageStore implements MessageStore {
             } else {
                 this.haService = ServiceProvider.loadClass(HAService.class);
                 if (null == this.haService) {
+                    //TODO:创建高可用服务，用来做数据同步
                     this.haService = new DefaultHAService();
                     LOGGER.warn("Load default HA Service: {}", DefaultHAService.class.getSimpleName());
                 }
             }
         }
 
+        //TODO:构建消息分发服务，就是用来构建消息的consumequeue索引和IndexFile索引
         if (!messageStoreConfig.isEnableBuildConsumeQueueConcurrently()) {
             this.reputMessageService = new ReputMessageService();
         } else {
@@ -255,6 +265,7 @@ public class DefaultMessageStore implements MessageStore {
         this.scheduledExecutorService =
             ThreadUtils.newSingleThreadScheduledExecutor(new ThreadFactoryImpl("StoreScheduledThread", getBrokerIdentity()));
 
+        //TODO:设置消息分发的组件，分别是构建consumequeue索引和IndexFile索引的
         this.dispatcherList = new LinkedList<>();
         this.dispatcherList.addLast(new CommitLogDispatcherBuildConsumeQueue());
         this.dispatcherList.addLast(new CommitLogDispatcherBuildIndex());

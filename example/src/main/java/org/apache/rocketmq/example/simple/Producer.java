@@ -50,7 +50,7 @@ public class Producer {
             }
         }
 
-        producer.shutdown();
+//        producer.shutdown();
     }
 
     public static String BigString(){

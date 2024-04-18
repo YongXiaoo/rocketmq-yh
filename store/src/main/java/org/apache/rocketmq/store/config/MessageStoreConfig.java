@@ -23,15 +23,19 @@ import org.apache.rocketmq.store.ConsumeQueue;
 import org.apache.rocketmq.store.StoreType;
 import org.apache.rocketmq.store.queue.BatchConsumeQueue;
 
+/**
+ * 消息存储的配置类
+ */
 public class MessageStoreConfig {
 
+    //todo 多路径存储（实际用的少）
     public static final String MULTI_PATH_SPLITTER = System.getProperty("rocketmq.broker.multiPathSplitter", ",");
 
-    //The root directory in which the log data is kept
+    //todo 数据存储的根目录
     @ImportantField
     private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
 
-    //The directory in which the commitlog is kept
+    //todo commitLog存储的目录
     @ImportantField
     private String storePathCommitLog = null;
 
@@ -47,10 +51,10 @@ public class MessageStoreConfig {
 
     private String readOnlyCommitLogStorePaths = null;
 
-    // CommitLog file size,default is 1G
+    //todo  CommitLog file size,default is 1G
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
 
-    // CompactinLog file size, default is 100M
+    //todo CompactinLog file size, default is 100M
     private int compactionMappedFileSize = 100 * 1024 * 1024;
 
     // CompactionLog consumeQueue file size, default is 10M
@@ -106,7 +110,7 @@ public class MessageStoreConfig {
     // default, defaultRocksDB
     @ImportantField
     private String storeType = StoreType.DEFAULT.getStoreType();
-    // ConsumeQueue file size,default is 30W
+    //todo ConsumeQueue file size,default is 30W 个索引单元
     private int mappedFileSizeConsumeQueue = 300000 * ConsumeQueue.CQ_STORE_UNIT_SIZE;
     // enable consume queue ext
     private boolean enableConsumeQueueExt = false;
@@ -151,11 +155,11 @@ public class MessageStoreConfig {
     private int deleteConsumeQueueFilesInterval = 100;
     private int destroyMapedFileIntervalForcibly = 1000 * 120;
     private int redeleteHangedFileInterval = 1000 * 120;
-    // When to delete,default is at 4 am
+    //todo  When to delete,default is at 4 am
     @ImportantField
     private String deleteWhen = "04";
     private int diskMaxUsedSpaceRatio = 75;
-    // The number of hours to keep a log file before deleting it (in hours)
+    //todo The number of hours to keep a log file before deleting it (in hours) 默认保存三天
     @ImportantField
     private int fileReservedTime = 72;
     @ImportantField

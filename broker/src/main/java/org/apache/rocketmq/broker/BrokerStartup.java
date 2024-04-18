@@ -44,14 +44,17 @@ import org.apache.rocketmq.store.config.MessageStoreConfig;
 public class BrokerStartup {
 
     public static Logger log;
+    //todo 加载properties配置文件的工具类
     public static final SystemConfigFileHelper CONFIG_FILE_HELPER = new SystemConfigFileHelper();
 
     public static void main(String[] args) {
+        //todo 创建Controller对象
         start(createBrokerController(args));
     }
 
     public static BrokerController start(BrokerController controller) {
         try {
+            //todo 启动Controller
             controller.start();
 
             String tip = String.format("The broker[%s, %s] boot success. serializeType=%s",
@@ -82,11 +85,15 @@ public class BrokerStartup {
     public static BrokerController buildBrokerController(String[] args) throws Exception {
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
 
+        //todo 创建配置对象
         final BrokerConfig brokerConfig = new BrokerConfig();
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         final NettyClientConfig nettyClientConfig = new NettyClientConfig();
         final MessageStoreConfig messageStoreConfig = new MessageStoreConfig();
+
+        //todo 设置broker 与 client的交互端口 默认是10911
         nettyServerConfig.setListenPort(10911);
+        //todo 5.x新特性 HA端口
         messageStoreConfig.setHaListenPort(0);
 
         Options options = ServerUtil.buildCommandlineOptions(new Options());
@@ -96,6 +103,7 @@ public class BrokerStartup {
             System.exit(-1);
         }
 
+        //todo 读取broker.conf配置文件
         Properties properties = null;
         if (commandLine.hasOption('c')) {
             String file = commandLine.getOptionValue('c');
@@ -106,7 +114,9 @@ public class BrokerStartup {
             }
         }
 
+        //todo 将配置文件内容利用反射设置到对应的配置对象中
         if (properties != null) {
+            //todo 设置环境变量
             properties2SystemEnv(properties);
             MixAll.properties2Object(properties, brokerConfig);
             MixAll.properties2Object(properties, nettyServerConfig);
@@ -114,14 +124,17 @@ public class BrokerStartup {
             MixAll.properties2Object(properties, messageStoreConfig);
         }
 
+        //todo 将命令行中的参数设置到配置对象中
         MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), brokerConfig);
+
+        //todo 判断环境变量ROCKETMQ_HOME是否设置
         if (null == brokerConfig.getRocketmqHome()) {
             System.out.printf("Please set the %s variable in your environment " +
                 "to match the location of the RocketMQ installation", MixAll.ROCKETMQ_HOME_ENV);
             System.exit(-2);
         }
 
-        // Validate namesrvAddr
+        //todo Validate namesrvAddr
         String namesrvAddr = brokerConfig.getNamesrvAddr();
         if (StringUtils.isNotBlank(namesrvAddr)) {
             try {
@@ -136,6 +149,7 @@ public class BrokerStartup {
             }
         }
 
+        //todo 设置从broker的属性
         if (BrokerRole.SLAVE == messageStoreConfig.getBrokerRole()) {
             int ratio = messageStoreConfig.getAccessMessageInMemoryMaxRatio() - 10;
             messageStoreConfig.setAccessMessageInMemoryMaxRatio(ratio);
@@ -146,9 +160,11 @@ public class BrokerStartup {
             switch (messageStoreConfig.getBrokerRole()) {
                 case ASYNC_MASTER:
                 case SYNC_MASTER:
+                    //todo 设置master机器的id为0
                     brokerConfig.setBrokerId(MixAll.MASTER_ID);
                     break;
                 case SLAVE:
+                    //todo 设置slave机器的id > 0
                     if (brokerConfig.getBrokerId() <= MixAll.MASTER_ID) {
                         System.out.printf("Slave's brokerId must be > 0%n");
                         System.exit(-3);
@@ -168,10 +184,12 @@ public class BrokerStartup {
             System.exit(-4);
         }
 
+        //todo 设置master 和 slave 通信的端口为10912
         if (messageStoreConfig.getHaListenPort() <= 0) {
             messageStoreConfig.setHaListenPort(nettyServerConfig.getListenPort() + 1);
         }
 
+        //todo 默认不开启container
         brokerConfig.setInBrokerContainer(false);
 
         System.setProperty("brokerLogDir", "");
@@ -181,6 +199,8 @@ public class BrokerStartup {
         if (brokerConfig.isIsolateLogEnable() && messageStoreConfig.isEnableDLegerCommitLog()) {
             System.setProperty("brokerLogDir", brokerConfig.getBrokerName() + "_" + messageStoreConfig.getdLegerSelfId());
         }
+
+        //todo 继续设置参数
 
         if (commandLine.hasOption('p')) {
             Logger console = LoggerFactory.getLogger(LoggerName.BROKER_CONSOLE_NAME);
@@ -204,10 +224,11 @@ public class BrokerStartup {
         MixAll.printObjectProperties(log, nettyClientConfig);
         MixAll.printObjectProperties(log, messageStoreConfig);
 
+        //todo 创建BrokerController对象
         final BrokerController controller = new BrokerController(
             brokerConfig, nettyServerConfig, nettyClientConfig, messageStoreConfig);
 
-        // Remember all configs to prevent discard
+        //todo Remember all configs to prevent discard
         controller.getConfiguration().registerConfig(properties);
 
         return controller;
@@ -236,8 +257,11 @@ public class BrokerStartup {
 
     public static BrokerController createBrokerController(String[] args) {
         try {
+            //todo 构建controller对象
             BrokerController controller = buildBrokerController(args);
+            //todo 执行初始化
             boolean initResult = controller.initialize();
+            //todo 失败则直接退出 关闭所有资源
             if (!initResult) {
                 controller.shutdown();
                 System.exit(-3);
